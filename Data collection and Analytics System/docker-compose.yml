@@ -1,0 +1,78 @@
+version: "3.8"
+
+services:
+  mysqldb:
+    container_name: mysqldb
+    image: mysql:latest
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: mydb
+    networks:
+      - net
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_DATABASE: Analytics
+    ports:
+      - "27017"
+    networks:
+      - net
+
+  dataentry:
+    container_name: dataentry
+    build:
+      context: ./EnterDataApp
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - net
+    depends_on:
+      - authservice
+      - mysqldb
+
+  authservice:
+    container_name: authservice
+    build:
+      context: ./AuthenticationService
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    networks:
+      - net
+
+  datashow:
+    container_name: datashow
+    build:
+      context: ./ShowResultsApp
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    networks:
+      - net
+    depends_on:
+      - authservice
+      - mongodb
+
+  analytics:
+    container_name: analytics
+    build:
+      context: ./AnalyticsService
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      - net
+    depends_on:
+      - mysqldb
+      - mongodb
+
+
+networks:
+  net: {}
